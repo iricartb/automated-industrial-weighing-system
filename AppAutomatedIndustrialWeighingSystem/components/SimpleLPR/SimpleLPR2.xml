@@ -1,0 +1,692 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SimpleLPR2</name>
+    </assembly>
+    <members>
+        <member name="T:SimpleLPR2.VersionNumber">
+            <summary>
+            Encapsulates the application version number.
+            </summary>
+        </member>
+        <member name="F:SimpleLPR2.VersionNumber.A">
+            <summary>
+            First element of the of SimpleLPR_Native.dll product number.
+            </summary>
+        </member>
+        <member name="F:SimpleLPR2.VersionNumber.B">
+            <summary>
+            Second element of the of SimpleLPR_Native.dll product number.
+            </summary>
+        </member>
+        <member name="F:SimpleLPR2.VersionNumber.C">
+            <summary>
+            Third element of the of SimpleLPR_Native.dll product number.
+            </summary>
+        </member>
+        <member name="F:SimpleLPR2.VersionNumber.D">
+            <summary>
+            Fourth element of the of SimpleLPR_Native.dll product number.
+            </summary>
+        </member>
+        <member name="T:SimpleLPR2.Element">
+            <summary>
+            Encapsulates a candidate character in a license plate.
+            </summary>
+        </member>
+        <member name="F:SimpleLPR2.Element.glyph">
+            <summary>
+            Unicode representation of the character.
+            </summary>
+        </member>
+        <member name="F:SimpleLPR2.Element.confidence">
+            <summary>
+            'Goodness' of the recognition. Its range is 0 to 1 and can be used to rank candidates although it should not be regarded as a probability. In general, a 2x goodness value is not twice as good as x.
+            </summary>
+        </member>
+        <member name="F:SimpleLPR2.Element.bbox">
+            <summary>
+            Bounding box of the character, in pixel coordinates.
+            </summary>
+        </member>
+        <member name="T:SimpleLPR2.Candidate">
+            <summary>
+            Encapsulates a license plate candidate.
+            </summary>
+        </member>
+        <member name="F:SimpleLPR2.Candidate.text">
+            <summary>
+            Unicode representation of the license plate string. Separators are represented as white space.
+            </summary>
+        </member>
+        <member name="F:SimpleLPR2.Candidate.country">
+            <summary>
+            Country code string. 
+            </summary>
+        </member>
+        <member name="F:SimpleLPR2.Candidate.confidence">
+            <summary>
+            Overall 'goodness' of the recognition.
+            Currently it is calculated as the minimum goodness value of all individual characters in the license plate.
+            See <seealso cref="F:SimpleLPR2.Element.confidence"/>.
+            </summary>
+        </member>
+        <member name="F:SimpleLPR2.Candidate.brightBackground">
+            <summary>
+            True if the license plate features dark text on a light background. False if otherwise.
+            </summary>
+        </member>
+        <member name="F:SimpleLPR2.Candidate.elements">
+            <summary>
+            Information about the individual chars that make up the license plate. They are listed in the same order
+            as they appear in the <seealso cref="F:SimpleLPR2.Candidate.text"/> string. To know the physical layout use the <seealso cref="F:SimpleLPR2.Element.bbox"/> field. 
+            </summary>
+        </member>
+        <member name="T:SimpleLPR2.IProcessor">
+            <summary>
+            Provides access to the license plate recognition functionality of SimpleLPR.
+            </summary>
+            <remarks>
+            This class is not multi-threaded and, therefore, each thread should use a different IProcessor instance.
+            </remarks>
+        </member>
+        <member name="M:SimpleLPR2.IProcessor.analyze(System.IntPtr,System.UInt32,System.UInt32,System.UInt32,System.UInt32)">
+            <summary>
+            Looks for license plate candidates in a memory buffer containing a 8 bit gray scale image.
+            </summary>
+            <param name="pImgData">Pointer to the first image row. The image must be 8 bit gray scale and top down: the top row of the image is the first row in memory, followed by the next row down.</param>
+            <param name="widthStep">Distance in bytes between starts of consecutive rows in the source image.</param>
+            <param name="width">Image width in pixels.</param>
+            <param name="height">Image height in pixels.</param>
+            <param name="maxCharHeight">Maximum height in pixels of the characters in the license plate.</param>
+            <returns>List of <seealso cref="T:SimpleLPR2.Candidate"/> containing all license plate candidates.</returns>
+            <remarks>
+            This method is not multi-threaded.
+            </remarks>
+        </member>
+        <member name="M:SimpleLPR2.IProcessor.analyze_C3(System.IntPtr,System.UInt32,System.UInt32,System.UInt32,System.UInt32,System.Single,System.Single,System.Single)">
+             <summary>
+             Looks for license plate candidates in a memory buffer containing a 3-channel 8 bit/channel color image stored in pixel order. Every pixel in the source image is internally converted to gray scale according to the following formula:
+            
+                      L = fWeight0 * C0 + fWeight1 * C1 + fWeight2 * C2
+                      
+            				For instance, to convert a RGB image to gray scale according the standard for the NTSC CRT the value
+            				of the weights should be:  
+            
+            					Red:   fWeight0 = 0.299 
+            					Green: fWeight1 = 0.587 
+            					Blue:  fWeight2 = 0.114			
+             </summary>
+             <param name="pImgData">Pointer to the first image row. The image must be a 3-channel 8 bit/channel color image stored in pixel order and top down: the top row of the image is the first row in memory, followed by the next row down.</param>
+             <param name="widthStep">Distance in bytes between starts of consecutive rows in the source image.</param>
+             <param name="width">Image width in pixels.</param>
+             <param name="height">Image height in pixels.</param>
+             <param name="maxCharHeight">Maximum height in pixels of the characters in the license plate.</param>
+             <param name="fWeight0">Weight of the first channel.</param>
+             <param name="fWeight1">Weight of the second channel.</param>
+             <param name="fWeight2">Weight of the third channel.</param>
+             <returns>List of <seealso cref="T:SimpleLPR2.Candidate"/> containing all license plate candidates.</returns>
+             <remarks>
+             This method is not multi-threaded.
+             </remarks>
+        </member>
+        <member name="M:SimpleLPR2.IProcessor.analyze_C4(System.IntPtr,System.UInt32,System.UInt32,System.UInt32,System.UInt32,System.Single,System.Single,System.Single)">
+             <summary>
+             Looks for license plate candidates in a memory buffer containing a 4-channel 8 bit/channel color image stored in pixel order. The fourth byte in each pixel is not used. Every pixel in the source image is internally converted to gray scale according to the following formula:
+            
+                      L = fWeight0 * C0 + fWeight1 * C1 + fWeight2 * C2
+                      
+            				For instance, to convert a RGB image to gray scale according the standard for the NTSC CRT the value
+            				of the weights should be:  
+            
+            					Red:   fWeight0 = 0.299 
+            					Green: fWeight1 = 0.587 
+            					Blue:  fWeight2 = 0.114			
+             </summary>
+             <param name="pImgData">Pointer to the first image row. The image must be a 3-channel 8 bit/channel color image stored in pixel order and top down: the top row of the image is the first row in memory, followed by the next row down.</param>
+             <param name="widthStep">Distance in bytes between starts of consecutive rows in the source image.</param>
+             <param name="width">Image width in pixels.</param>
+             <param name="height">Image height in pixels.</param>
+             <param name="maxCharHeight">Maximum height in pixels of the characters in the license plate.</param>
+             <param name="fWeight0">Weight of the first channel.</param>
+             <param name="fWeight1">Weight of the second channel.</param>
+             <param name="fWeight2">Weight of the third channel.</param>
+             <returns>List of <seealso cref="T:SimpleLPR2.Candidate"/> containing all license plate candidates.</returns>
+             <remarks>
+             This method is not multi-threaded.
+             </remarks>
+        </member>
+        <member name="M:SimpleLPR2.IProcessor.analyze(System.Drawing.Bitmap,System.UInt32)">
+            <summary>
+            Looks for license plate candidates in a Bitmap object. 
+            <param name="img">Bitmap object containing the image.</param>
+            <param name="maxCharHeight">Maximum height in pixels of the characters in the license plate.</param>
+            <returns>List of <seealso cref="T:SimpleLPR2.Candidate"/> containing all license plate candidates.</returns>
+            </summary>
+            <remarks>
+            This method is not multi-threaded.
+            Only the Format24bppRgb and Format8bppIndexed pixel formats are supported.
+            </remarks>
+        </member>
+        <member name="M:SimpleLPR2.IProcessor.analyze(System.String,System.UInt32)">
+            <summary>
+            Looks for license plate candidates in an image loaded from a .jpg, .png or .tif file. The images can be either 24 bit RGB or 8 bit gray scale. 
+            <param name="imgPath">Path to a .jpg, .png or .tif file containing a 24 bit RGB or 8 bit gray scale image.</param>
+            <param name="maxCharHeight">Maximum height in pixels of the characters in the license plate.</param>
+            <returns>List of <seealso cref="T:SimpleLPR2.Candidate"/> containing all license plate candidates.</returns>
+            </summary>
+            <remarks>
+            This method is not multi-threaded.
+            </remarks>
+        </member>
+        <member name="T:SimpleLPR2.ISimpleLPR">
+            <summary>
+            Encapsulates the SimpleLPR engine.
+            </summary>
+        </member>
+        <member name="M:SimpleLPR2.ISimpleLPR.get_countryCode(System.UInt32)">
+            <summary>
+            Given a country index it returns its string identifier.
+            </summary>
+            <param name="id">The country index. 0 &lt;= <paramref name="id"/> &lt; <seealso cref="P:SimpleLPR2.ISimpleLPR.numSupportedCountries"/> - 1</param>
+            <returns>The country string identifier.</returns>
+        </member>
+        <member name="M:SimpleLPR2.ISimpleLPR.get_countryWeight(System.UInt32)">
+            <summary>
+            Given a country index it gets the country relative weight.
+            Weights are used to break ties when a candidate can belong to multiple countries.
+            </summary>
+            <param name="id">The country index. 0 &lt;= <paramref name="id"/> &lt; <seealso cref="P:SimpleLPR2.ISimpleLPR.numSupportedCountries"/> - 1</param>
+            <returns>The relative weight of the country.</returns>
+        </member>
+        <member name="M:SimpleLPR2.ISimpleLPR.set_countryWeight(System.UInt32,System.Single)">
+            <summary>
+            Sets the country relative weight.
+            Weights are used to break ties when a candidate can belong to multiple countries.
+            </summary>
+            <param name="id">The country index. 0 &lt;= <paramref name="id"/> &lt;= <seealso cref="P:SimpleLPR2.ISimpleLPR.numSupportedCountries"/> - 1</param>
+            <param name="val">The desired country weight. <paramref name="val"/> &gt; 0</param>
+            <remarks>
+            Weight must be &gt;= 0. Use a zero weight to effectively disable a specific country.
+            </remarks>
+        </member>
+        <member name="M:SimpleLPR2.ISimpleLPR.get_countryWeight(System.String)">
+            <summary>
+            Given a country string identifier it gets the country relative weight.
+            Weights are used to break ties when a candidate can belong to multiple countries.
+            </summary>
+            <param name="id">The country string identifier. <seealso cref="M:SimpleLPR2.ISimpleLPR.get_countryCode(System.UInt32)"/>.</param>
+            <returns>The relative weight of the country.</returns>
+            
+        </member>
+        <member name="M:SimpleLPR2.ISimpleLPR.set_countryWeight(System.String,System.Single)">
+            <summary>
+            Sets the country relative weight.
+            Weights are used to break ties when a candidate can belong to multiple countries.
+            </summary>
+            <param name='id'>The country string identifier. See <em>get_countryCode</em>.</param>
+            <param name='val'>The desired country weight. <paramref name="val"/> &gt;= 0</param>
+            <remarks>
+            Weight must be &gt;= 0. Use a zero weight to effectively disable a specific country.
+            </remarks>
+        </member>
+        <member name="M:SimpleLPR2.ISimpleLPR.realizeCountryWeights">
+            <summary>
+            Builds the internal country verification lookup tables based on which countries are enabled and their relative weights.
+            Call it once you have finished configuring country weights.
+            </summary>
+            <remarks>
+            Depending on the countries selected this method can be time consuming. After the execution of this method all existing and new <seealso cref="T:SimpleLPR2.IProcessor"/> instances will start using the new weights.
+            Avoid calling this method when another thread is executing <em>IProcessor.analyze</em>. 
+            </remarks>
+        </member>
+        <member name="M:SimpleLPR2.ISimpleLPR.createProcessor">
+            <summary>
+            Creates a new <seealso cref="T:SimpleLPR2.IProcessor"/> object.
+            </summary>
+            <returns>The newly created <seealso cref="T:SimpleLPR2.IProcessor"/> instance.</returns>
+            <remarks>
+            For this method to succeed, either the product must be within the evaluation period o a valid product key must be supplied using <em>set_productKey</em>.
+            </remarks>
+        </member>
+        <member name="M:SimpleLPR2.ISimpleLPR.set_productKey(System.String)">
+            <summary>
+            Sets the product key from a license file.
+            </summary>
+            <param name='productKeyPath'>Path to the product key file.</param>
+        </member>
+        <member name="M:SimpleLPR2.ISimpleLPR.set_productKey(System.Byte[])">
+            <summary>
+            Sets the product key from a memory buffer.
+            </summary>
+            <param name='productKey'>Byte array containing the product key.</param>
+        </member>
+        <member name="P:SimpleLPR2.ISimpleLPR.numSupportedCountries">
+            <summary>
+            <returns>Number of supported countries.</returns>
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.ISimpleLPR.versionNumber">
+            <summary>
+            <returns>Gets the version number of SimpleLPR2_native.dll.</returns>
+            </summary>
+        </member>
+        <member name="T:SimpleLPR2.SimpleLPR">
+            <summary>
+            SimpleLPR factory class.
+            </summary>
+        </member>
+        <member name="M:SimpleLPR2.SimpleLPR.Setup">
+            <summary>
+            Creates a <seealso cref="T:SimpleLPR2.ISimpleLPR"/> object.
+            </summary>
+            <returns>A <seealso cref="T:SimpleLPR2.ISimpleLPR"/> instance.</returns>
+        </member>
+        <member name="M:SimpleLPR2.SimpleLPR.Setup(System.String)">
+            <summary>
+            Creates a <seealso cref="T:SimpleLPR2.ISimpleLPR"/> object loading 'SimpleLPR2_native.dll' from a user defined location.
+            </summary>
+            <param name="sNativeFolderPath">The path to the folder which contains the x86 and x64 implementations of 'SimpleLPR2_native.dll'.</param>
+            <returns>A <seealso cref="T:SimpleLPR2.ISimpleLPR"/> instance.</returns>
+        </member>
+        <member name="T:SimpleLPR2.COM.IVersionNumber">
+            <summary>
+            Encapsulates the application version number.
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.IVersionNumber.A">
+            <summary>
+            First element of the of SimpleLPR_Native.dll product number.
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.IVersionNumber.B">
+            <summary>
+            Second element of the of SimpleLPR_Native.dll product number.
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.IVersionNumber.C">
+            <summary>
+            Third element of the of SimpleLPR_Native.dll product number.
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.IVersionNumber.D">
+            <summary>
+            Fourth element of the of SimpleLPR_Native.dll product number.
+            </summary>
+        </member>
+        <member name="T:SimpleLPR2.COM.IElement">
+            <summary>
+            Encapsulates a candidate character in a license plate.
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.IElement.glyph">
+            <summary>
+            Unicode representation of the character.
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.IElement.confidence">
+            <summary>
+            'Goodness' of the recognition. Its range is 0 to 1 and can be used to rank candidates although it should not be regarded as a probability. In general, a 2x goodness value is not twice as good as x.
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.IElement.bbox">
+            <summary>
+            Bounding box of the character, in pixel coordinates.
+            </summary>
+        </member>
+        <member name="T:SimpleLPR2.COM.IElements">
+            <summary>
+            Encapsulates a list of <seealso cref="T:SimpleLPR2.COM.IElement"/>
+            </summary>
+        </member>
+        <member name="M:SimpleLPR2.COM.IElements.get_element(System.Int32)">
+            <summary>
+            Given an index it returns the corresponding element.
+            </summary>
+            <param name="id">The element index. 0 &lt;= <paramref name="id"/> &lt;= <seealso cref="P:SimpleLPR2.COM.IElements.numElements"/> - 1</param>
+            <returns>The country string identifier.</returns>
+        </member>
+        <member name="P:SimpleLPR2.COM.IElements.numElements">
+            <summary>
+            <returns>Number of elements contained in the list.</returns>
+            </summary>
+        </member>
+        <member name="T:SimpleLPR2.COM.ICandidate">
+            <summary>
+            Encapsulates a license plate candidate.
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.ICandidate.text">
+            <summary>
+            Unicode representation of the license plate string. Separators are represented as white space.
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.ICandidate.country">
+            <summary>
+            Country code string. 
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.ICandidate.confidence">
+            <summary>
+            Overall 'goodness' of the recognition.
+            Currently it is calculated as the minimum goodness value of all individual characters in the license plate.
+            See <seealso cref="P:SimpleLPR2.COM.Element.confidence"/>.
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.ICandidate.brightBackground">
+            <summary>
+            True if the license plate features dark text on a light background. False if otherwise.
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.ICandidate.elements">
+            <summary>
+            Information about the individual chars that make up the license plate. They are listed in the same order
+            as they appear in the <seealso cref="P:SimpleLPR2.COM.Candidate.text"/> string. To know the physical layout use the <seealso cref="P:SimpleLPR2.COM.IElement.bbox"/> field. 
+            </summary>
+        </member>
+        <member name="T:SimpleLPR2.COM.ICandidates">
+            <summary>
+            Encapsulates a list of <seealso cref="T:SimpleLPR2.COM.ICandidate"/>
+            </summary>
+        </member>
+        <member name="M:SimpleLPR2.COM.ICandidates.get_candidate(System.Int32)">
+            <summary>
+            Given an index it returns the corresponding element.
+            </summary>
+            <param name="id">The element index. 0 &lt;= <paramref name="id"/> &lt;= <seealso cref="P:SimpleLPR2.COM.ICandidates.numCandidates"/> - 1</param>
+            <returns>The country string identifier.</returns>
+        </member>
+        <member name="P:SimpleLPR2.COM.ICandidates.numCandidates">
+            <summary>
+            <returns>Number of elements contained in the list.</returns>
+            </summary>
+        </member>
+        <member name="T:SimpleLPR2.COM.IProcessor">
+            <summary>
+            Provides access to the license plate recognition functionality of SimpleLPR.
+            </summary>
+            <remarks>
+            This class is not multi-threaded and, therefore, each thread should use a different IProcessor instance.
+            </remarks>
+        </member>
+        <member name="M:SimpleLPR2.COM.IProcessor.analyze(System.IntPtr,System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Looks for license plate candidates in a memory buffer containing a 8 bit gray scale image.
+            </summary>
+            <param name="pImgData">Pointer to the first image row. The image must be 8 bit gray scale and top down: the top row of the image is the first row in memory, followed by the next row down.</param>
+            <param name="widthStep">Distance in bytes between starts of consecutive rows in the source image.</param>
+            <param name="width">Image width in pixels.</param>
+            <param name="height">Image height in pixels.</param>
+            <param name="maxCharHeight">Maximum height in pixels of the characters in the license plate.</param>
+            <returns>List of <seealso cref="T:SimpleLPR2.COM.ICandidate"/> containing all license plate candidates.</returns>
+            <remarks>
+            This method is not multi-threaded.
+            </remarks>
+        </member>
+        <member name="M:SimpleLPR2.COM.IProcessor.analyze_C3(System.IntPtr,System.Int32,System.Int32,System.Int32,System.Int32,System.Single,System.Single,System.Single)">
+             <summary>
+             Looks for license plate candidates in a memory buffer containing a 3-channel 8 bit/channel color image stored in pixel order. Every pixel in the source image is internally converted to gray scale according to the following formula:
+            
+                      L = fWeight0 * C0 + fWeight1 * C1 + fWeight2 * C2
+                      
+            				For instance, to convert a RGB image to gray scale according the standard for the NTSC CRT the value
+            				of the weights should be:  
+            
+            					Red:   fWeight0 = 0.299 
+            					Green: fWeight1 = 0.587 
+            					Blue:  fWeight2 = 0.114			
+             </summary>
+             <param name="pImgData">Pointer to the first image row. The image must be a 3-channel 8 bit/channel color image stored in pixel order and top down: the top row of the image is the first row in memory, followed by the next row down.</param>
+             <param name="widthStep">Distance in bytes between starts of consecutive rows in the source image.</param>
+             <param name="width">Image width in pixels.</param>
+             <param name="height">Image height in pixels.</param>
+             <param name="maxCharHeight">Maximum height in pixels of the characters in the license plate.</param>
+             <param name="fWeight0">Weight of the first channel.</param>
+             <param name="fWeight1">Weight of the second channel.</param>
+             <param name="fWeight2">Weight of the third channel.</param>
+             <returns>List of <seealso cref="T:SimpleLPR2.COM.ICandidate"/> containing all license plate candidates.</returns>
+             <remarks>
+             This method is not multi-threaded.
+             </remarks>
+        </member>
+        <member name="M:SimpleLPR2.COM.IProcessor.analyze_C4(System.IntPtr,System.Int32,System.Int32,System.Int32,System.Int32,System.Single,System.Single,System.Single)">
+             <summary>
+             Looks for license plate candidates in a memory buffer containing a 4-channel 8 bit/channel color image stored in pixel order. The fourth byte in each pixel is not used. Every pixel in the source image is internally converted to gray scale according to the following formula:
+            
+                      L = fWeight0 * C0 + fWeight1 * C1 + fWeight2 * C2
+                      
+            				For instance, to convert a RGB image to gray scale according the standard for the NTSC CRT the value
+            				of the weights should be:  
+            
+            					Red:   fWeight0 = 0.299 
+            					Green: fWeight1 = 0.587 
+            					Blue:  fWeight2 = 0.114			
+             </summary>
+             <param name="pImgData">Pointer to the first image row. The image must be a 4-channel 8 bit/channel color image stored in pixel order and top down: the top row of the image is the first row in memory, followed by the next row down.</param>
+             <param name="widthStep">Distance in bytes between starts of consecutive rows in the source image.</param>
+             <param name="width">Image width in pixels.</param>
+             <param name="height">Image height in pixels.</param>
+             <param name="maxCharHeight">Maximum height in pixels of the characters in the license plate.</param>
+             <param name="fWeight0">Weight of the first channel.</param>
+             <param name="fWeight1">Weight of the second channel.</param>
+             <param name="fWeight2">Weight of the third channel.</param>
+             <returns>List of <seealso cref="T:SimpleLPR2.COM.ICandidate"/> containing all license plate candidates.</returns>
+             <remarks>
+             This method is not multi-threaded.
+             </remarks>
+        </member>
+        <member name="M:SimpleLPR2.COM.IProcessor.analyze(System.Drawing.Bitmap,System.Int32)">
+            <summary>
+            Looks for license plate candidates in a Bitmap object. 
+            <param name="img">Bitmap object containing the image.</param>
+            <param name="maxCharHeight">Maximum height in pixels of the characters in the license plate.</param>
+            <returns>List of <seealso cref="T:SimpleLPR2.COM.ICandidate"/> containing all license plate candidates.</returns>
+            </summary>
+            <remarks>
+            This method is not multi-threaded.
+            Only the Format24bppRgb and Format8bppIndexed pixel formats are supported.
+            </remarks>
+        </member>
+        <member name="M:SimpleLPR2.COM.IProcessor.analyze(System.String,System.Int32)">
+            <summary>
+            Looks for license plate candidates in an image loaded from a .jpg, .png or .tif file. The images can be either 24 bit RGB or 8 bit gray scale. 
+            <param name="imgPath">Path to a .jpg, .png or .tif file containing a 24 bit RGB or 8 bit gray scale image.</param>
+            <param name="maxCharHeight">Maximum height in pixels of the characters in the license plate.</param>
+            <returns>List of <seealso cref="T:SimpleLPR2.COM.ICandidate"/> containing all license plate candidates.</returns>
+            </summary>
+            <remarks>
+            This method is not multi-threaded.
+            </remarks>
+        </member>
+        <member name="T:SimpleLPR2.COM.ISimpleLPR">
+            <summary>
+            Encapsulates the SimpleLPR engine.
+            </summary>
+        </member>
+        <member name="M:SimpleLPR2.COM.ISimpleLPR.get_countryCode(System.Int32)">
+            <summary>
+            Given a country index it returns its string identifier.
+            </summary>
+            <param name="id">The country index. 0 &lt;= <paramref name="id"/> &lt; <seealso cref="P:SimpleLPR2.COM.ISimpleLPR.numSupportedCountries"/> - 1</param>
+            <returns>The country string identifier.</returns>
+        </member>
+        <member name="M:SimpleLPR2.COM.ISimpleLPR.get_countryWeight(System.Int32)">
+            <summary>
+            Given a country index it gets the country relative weight.
+            Weights are used to break ties when a candidate can belong to multiple countries.
+            </summary>
+            <param name="id">The country index. 0 &lt;= <paramref name="id"/> &lt; <seealso cref="P:SimpleLPR2.COM.ISimpleLPR.numSupportedCountries"/> - 1</param>
+            <returns>The relative weight of the country.</returns>
+        </member>
+        <member name="M:SimpleLPR2.COM.ISimpleLPR.set_countryWeight(System.Int32,System.Single)">
+            <summary>
+            Sets the country relative weight.
+            Weights are used to break ties when a candidate can belong to multiple countries.
+            </summary>
+            <param name="id">The country index. 0 &lt;= <paramref name="id"/> &lt; <seealso cref="P:SimpleLPR2.COM.ISimpleLPR.numSupportedCountries"/> - 1</param>
+            <param name="val">The desired country weight. <paramref name="val"/> &gt;= 0</param>
+            <remarks>
+            Weight must be &gt;= 0. Use a zero weight to effectively disable a specific country.
+            </remarks>
+        </member>
+        <member name="M:SimpleLPR2.COM.ISimpleLPR.get_countryWeight(System.String)">
+            <summary>
+            Given a country string identifier it gets the country relative weight.
+            Weights are used to break ties when a candidate can belong to multiple countries.
+            </summary>
+            <param name="id">The country string identifier. <seealso cref="M:SimpleLPR2.COM.ISimpleLPR.get_countryCode(System.Int32)"/>.</param>
+            <returns>The relative weight of the country.</returns>
+            
+        </member>
+        <member name="M:SimpleLPR2.COM.ISimpleLPR.set_countryWeight(System.String,System.Single)">
+            <summary>
+            Sets the country relative weight.
+            Weights are used to break ties when a candidate can belong to multiple countries.
+            </summary>
+            <param name='id'>The country string identifier. See <em>get_countryCode</em>.</param>
+            <param name='val'>The desired country weight. <paramref name="val"/> &gt;= 0</param>
+            <remarks>
+            Weight must be &gt;= 0. Use a zero weight to effectively disable a specific country.
+            </remarks>
+        </member>
+        <member name="M:SimpleLPR2.COM.ISimpleLPR.realizeCountryWeights">
+            <summary>
+            Builds the internal country verification lookup tables based on which countries are enabled and their relative weights.
+            Call it once you have finished configuring country weights.
+            </summary>
+            <remarks>
+            Depending on the countries selected this method can be time consuming. After the execution of this method all existing and new <seealso cref="T:SimpleLPR2.COM.IProcessor"/> instances will start using the new weights.
+            Avoid calling this method when another thread is executing <em>IProcessor.analyze</em>. 
+            </remarks>
+        </member>
+        <member name="M:SimpleLPR2.COM.ISimpleLPR.createProcessor">
+            <summary>
+            Creates a new <seealso cref="T:SimpleLPR2.COM.IProcessor"/> object.
+            </summary>
+            <returns>The newly created <seealso cref="T:SimpleLPR2.COM.IProcessor"/> instance.</returns>
+            <remarks>
+            For this method to succeed, either the product must be within the evaluation period o a valid product key must be supplied using <em>set_productKey</em>.
+            </remarks>
+        </member>
+        <member name="M:SimpleLPR2.COM.ISimpleLPR.set_productKey(System.String)">
+            <summary>
+            Sets the product key from a license file.
+            </summary>
+            <param name='productKeyPath'>Path to the product key file.</param>
+        </member>
+        <member name="M:SimpleLPR2.COM.ISimpleLPR.set_productKey(System.Byte[])">
+            <summary>
+            Sets the product key from a memory buffer.
+            </summary>
+            <param name='productKey'>Byte array containing the product key.</param>
+        </member>
+        <member name="P:SimpleLPR2.COM.ISimpleLPR.numSupportedCountries">
+            <summary>
+            <returns>Number of supported countries.</returns>
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.ISimpleLPR.versionNumber">
+            <summary>
+            <returns>Gets the version number of SimpleLPR2_native.dll.</returns>
+            </summary>
+        </member>
+        <member name="T:SimpleLPR2.COM.VersionNumber">
+            <summary>
+            Encapsulates the application version number.
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.VersionNumber.A">
+            <summary>
+            First element of the of SimpleLPR_Native.dll product number.
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.VersionNumber.B">
+            <summary>
+            Second element of the of SimpleLPR_Native.dll product number.
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.VersionNumber.C">
+            <summary>
+            Third element of the of SimpleLPR_Native.dll product number.
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.VersionNumber.D">
+            <summary>
+            Fourth element of the of SimpleLPR_Native.dll product number.
+            </summary>
+        </member>
+        <member name="T:SimpleLPR2.COM.Element">
+            <summary>
+            Encapsulates a candidate character in a license plate.
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.Element.glyph">
+            <summary>
+            Unicode representation of the character.
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.Element.confidence">
+            <summary>
+            'Goodness' of the recognition. Its range is 0 to 1 and can be used to rank candidates although it should not be regarded as a probability. In general, a 2x goodness value is not twice as good as x.
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.Element.bbox">
+            <summary>
+            Bounding box of the character, in pixel coordinates.
+            </summary>
+        </member>
+        <member name="T:SimpleLPR2.COM.Elements">
+            <summary>
+            Elements class.
+            </summary>
+        </member>
+        <member name="T:SimpleLPR2.COM.Candidate">
+            <summary>
+            Candidate class.
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.Candidate.text">
+            <summary>
+            Unicode representation of the license plate string. Separators are represented as white space.
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.Candidate.country">
+            <summary>
+            Country code string. 
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.Candidate.confidence">
+            <summary>
+            Overall 'goodness' of the recognition.
+            Currently it is calculated as the minimum goodness value of all individual characters in the license plate.
+            See <seealso cref="P:SimpleLPR2.COM.Element.confidence"/>.
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.Candidate.brightBackground">
+            <summary>
+            True if the license plate features dark text on a light background. False if otherwise.
+            </summary>
+        </member>
+        <member name="P:SimpleLPR2.COM.Candidate.elements">
+            <summary>
+            Information about the individual chars that make up the license plate. They are listed in the same order
+            as they appear in the <seealso cref="P:SimpleLPR2.COM.Candidate.text"/> string. To know the physical layout use the <seealso cref="P:SimpleLPR2.COM.IElement.bbox"/> field. 
+            </summary>
+        </member>
+        <member name="T:SimpleLPR2.COM.Candidates">
+            <summary>
+            Candidates class.
+            </summary>
+        </member>
+        <member name="T:SimpleLPR2.COM.Processor">
+            <summary>
+            Processor class.
+            </summary>
+        </member>
+        <member name="T:SimpleLPR2.COM.SimpleLPR">
+            <summary>
+            SimpleLPR factory class.
+            </summary>
+        </member>
+    </members>
+</doc>
