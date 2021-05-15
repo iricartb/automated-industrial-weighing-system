@@ -1,4 +1,4 @@
-<img src="https://infoteksoftware.com/img/solutions-for-mining/uwa.png" weight="100%" />
+<img src="https://infoteksoftware.com/img/solutions-for-mining/uwa.png" width="100%" />
 
 <h1>AIWS</h1>
 <h2>Automated Industrial Weighing System</h2>
